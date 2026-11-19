@@ -221,6 +221,7 @@ function drawNext() {
 function endGame() {
   gameOver = true;
   cancelAnimationFrame(animId);
+  draw(); // pintar estado final del tablero
   overlayTitle.textContent = 'GAME OVER';
   overlayScore.textContent = `Puntuación: ${score.toLocaleString()}`;
   overlay.classList.remove('hidden');
@@ -241,6 +242,7 @@ function togglePause() {
 }
 
 function loop(ts) {
+  if (gameOver || paused) return;
   const dt = ts - lastTime;
   lastTime = ts;
   dropAccum += dt;
@@ -253,6 +255,9 @@ function loop(ts) {
     }
   }
   draw();
+  // endGame() puede ejecutarse dentro de este frame (lockPiece → spawn → endGame);
+  // su cancelAnimationFrame no detiene el frame actual, así que no re-agendar.
+  if (gameOver) return;
   animId = requestAnimationFrame(loop);
 }
 
