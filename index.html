@@ -44,11 +44,46 @@
       </aside>
     </div>
 
+    <!-- Pantalla de inicio: el juego no arranca hasta pulsar Jugar -->
+    <div id="start-overlay" class="overlay">
+      <div class="overlay-box">
+        <p class="start-title">TETRIS</p>
+        <button id="play-btn" class="primary-btn">Jugar</button>
+        <div class="records">
+          <span class="label">RECORDS</span>
+          <table class="records-table">
+            <thead>
+              <tr><th>#</th><th>Nombre</th><th>Puntos</th><th>Líneas</th><th>Combo</th></tr>
+            </thead>
+            <tbody id="start-records"></tbody>
+          </table>
+          <p class="records-stats" id="start-stats"></p>
+          <button class="reset-records-btn secondary-btn" type="button">Resetear records</button>
+        </div>
+      </div>
+    </div>
+
     <div id="overlay" class="overlay hidden">
       <div class="overlay-box">
         <p id="overlay-title">GAME OVER</p>
         <p id="overlay-score"></p>
-        <button id="restart-btn">Reiniciar</button>
+        <div id="gameover-records" class="records hidden">
+          <p id="new-record-msg" class="new-record hidden">¡Nuevo record! Entraste en el top 5</p>
+          <form id="name-form" class="name-form hidden" autocomplete="off">
+            <input id="name-input" type="text"placeholder="Tu nombre" aria-label="Nombre del jugador" />
+            <button type="submit" class="primary-btn small">Guardar</button>
+          </form>
+          <span class="label">RECORDS</span>
+          <table class="records-table">
+            <thead>
+              <tr><th>#</th><th>Nombre</th><th>Puntos</th><th>Líneas</th><th>Combo</th></tr>
+            </thead>
+            <tbody id="gameover-records-body"></tbody>
+          </table>
+          <p class="records-stats" id="gameover-stats"></p>
+          <button class="reset-records-btn secondary-btn" type="button">Resetear records</button>
+        </div>
+        <button id="restart-btn" class="primary-btn">Reiniciar</button>
       </div>
     </div>
   </div>
