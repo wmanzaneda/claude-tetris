@@ -1,0 +1,92 @@
+name: Claude Issue Triage
+
+on:
+  issues:
+    types: [opened, edited]
+
+concurrency:
+  group: issue-triage-${{ github.event.issue.number }}
+  cancel-in-progress: true
+
+jobs:
+  triage:
+    # opened: siempre. edited: solo si cambió título o cuerpo (no labels/asignaciones).
+    # Ignora issues creados por bots.
+    if: |
+      github.event.issue.user.type != 'Bot' &&
+      (
+        github.event.action == 'opened' ||
+        (github.event.action == 'edited' && (github.event.changes.title != null || github.event.changes.body != null))
+      )
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+      id-token: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Asegurar labels del set fijo
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh label create "bug"             --color d73a4a --description "Algo no funciona" --force
+          gh label create "enhancement"     --color a2eeef --description "Nueva funcionalidad o mejora" --force
+          gh label create "question"        --color d876e3 --description "Pregunta o duda" --force
+          gh label create "documentation"   --color 0075ca --description "Documentación" --force
+          gh label create "gameplay"        --color fbca04 --description "Lógica del juego (piezas, colisiones, puntaje)" --force
+          gh label create "ui"              --color c5def5 --description "Interfaz, estilos, HTML/CSS" --force
+          gh label create "performance"     --color f9d0c4 --description "Rendimiento" --force
+          gh label create "priority:high"   --color b60205 --description "Prioridad alta" --force
+          gh label create "priority:medium" --color ff9f1c --description "Prioridad media" --force
+          gh label create "priority:low"    --color 0e8a16 --description "Prioridad baja" --force
+          gh label create "needs-info"      --color ededed --description "Falta información para diagnosticar" --force
+
+      - name: Triage y diagnóstico con Claude
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          github_token: ${{ github.token }}
+          prompt: |
+            Eres el asistente de triage del repositorio ${{ github.repository }} (juego Tetris en JS vanilla: index.html, game.js, style.css).
+            Analiza el issue #${{ github.event.issue.number }} (evento: ${{ github.event.action }}).
+
+            PASOS:
+            1. Lee el issue: `gh issue view ${{ github.event.issue.number }} --repo ${{ github.repository }} --json title,body,labels`.
+            2. Explora el código relevante del repo (Read, Grep, Glob) para entender el problema.
+            3. Labels — usa SOLO este set fijo:
+               - Tipo (exactamente 1): bug, enhancement, question, documentation
+               - Área (0 o más): gameplay, ui, performance
+               - Prioridad (exactamente 1): priority:high, priority:medium, priority:low
+               - needs-info si falta información para diagnosticar.
+               Aplica con `gh issue edit ${{ github.event.issue.number }} --repo ${{ github.repository }} --add-label "a,b"`
+               y quita con `--remove-label` los labels de este set que ya no apliquen. No toques labels fuera del set.
+            4. Escribe el diagnóstico en español en el archivo /tmp/triage.md con este formato EXACTO
+               (la primera línea debe ser el marcador oculto):
+
+               <!-- claude-triage -->
+               ## 🤖 Diagnóstico automático
+               ### Resumen
+               ### Clasificación
+               (tipo, áreas, prioridad y justificación breve)
+               ### Archivos / funciones afectados
+               (rutas con línea, ej. `game.js:120` y nombre de función)
+               ### Causa probable / análisis
+               ### Enfoque de solución propuesto
+               (pasos concretos para implementar el fix)
+               ### Riesgos y casos borde
+               ### Preguntas abiertas
+               ---
+               _Se actualiza automáticamente al editar el issue._
+
+            5. Publica UN solo comentario de diagnóstico:
+               - Busca uno existente:
+                 `gh api repos/${{ github.repository }}/issues/${{ github.event.issue.number }}/comments --paginate --jq '.[] | select(.body | startswith("<!-- claude-triage -->")) | .id'`
+               - Si existe: `gh api -X PATCH repos/${{ github.repository }}/issues/comments/<ID> -F body=@/tmp/triage.md`
+               - Si no: `gh issue comment ${{ github.event.issue.number }} --repo ${{ github.repository }} --body-file /tmp/triage.md`
+
+            REGLAS: No modifiques código, no crees branches, commits ni PRs. Solo labels y el comentario de diagnóstico.
+          claude_args: '--allowedTools "Read,Glob,Grep,Write,Bash(gh issue view:*),Bash(gh issue edit:*),Bash(gh issue comment:*),Bash(gh api:*)"'
