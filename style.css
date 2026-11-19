@@ -4,6 +4,11 @@
   padding: 0;
 }
 
+:root {
+  /* fondo del canvas; game.js lo sobrescribe según el skin activo */
+  --canvas-bg: #1a1a25;
+}
+
 body {
   background: #0f0f17;
   color: #e0e0e0;
@@ -14,6 +19,7 @@ body {
   justify-content: center;
   min-height: 100vh;
   user-select: none;
+  transition: background 0.2s;
 }
 
 .title {
@@ -38,8 +44,9 @@ body {
 #board {
   display: block;
   border: 1px solid #2a2a3a;
-  background: #1a1a25;
+  background: var(--canvas-bg);
   border-radius: 4px;
+  transition: background 0.2s;
   box-shadow: 0 0 40px rgba(0, 0, 0, 0.6);
 }
 
@@ -76,8 +83,26 @@ body {
 #next-canvas {
   display: block;
   border: 1px solid #2a2a3a;
-  background: #1a1a25;
+  background: var(--canvas-bg);
   border-radius: 4px;
+  transition: background 0.2s;
+}
+
+/* ---- Selector de skin ---- */
+#skin-select {
+  background: #22223a;
+  color: #e0e0e0;
+  border: 1px solid #3a3a5a;
+  border-radius: 4px;
+  padding: 6px 8px;
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+#skin-select:focus {
+  outline: 2px solid #7aa2f7;
+  outline-offset: 1px;
 }
 
 /* ---- Controles ---- */
@@ -159,4 +184,52 @@ kbd {
 
 #restart-btn:hover {
   background: #9bbdff;
+}
+
+/* ---- Temas de página por skin ---- */
+
+body.skin-neon {
+  background: #000;
+}
+
+body.skin-neon .title,
+body.skin-neon .value {
+  color: #00f0ff;
+  text-shadow: 0 0 8px #00f0ff, 0 0 18px rgba(0, 240, 255, 0.5);
+}
+
+body.skin-neon #board,
+body.skin-neon #next-canvas {
+  border-color: #00f0ff55;
+  box-shadow: 0 0 24px rgba(0, 240, 255, 0.25);
+}
+
+body.skin-pastel {
+  background: #2a2433;
+}
+
+body.skin-pastel .title,
+body.skin-pastel .value {
+  color: #d9b8ea;
+}
+
+body.skin-pastel #board,
+body.skin-pastel #next-canvas {
+  border-color: #d9b8ea;
+  border-radius: 10px;
+}
+
+body.skin-pixel .title,
+body.skin-pixel .value {
+  font-family: 'Courier New', Courier, monospace;
+  color: #f8d878;
+  text-shadow: 3px 3px 0 #b83800;
+}
+
+body.skin-pixel #board,
+body.skin-pixel #next-canvas {
+  /* contorno grueso con box-shadow para no cambiar el tamaño del canvas */
+  border-radius: 0;
+  box-shadow: 0 0 0 2px #3a3a5a;
+  image-rendering: pixelated;
 }
