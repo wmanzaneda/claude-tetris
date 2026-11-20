@@ -4,7 +4,7 @@ const COLS = 10;
 const ROWS = 20;
 const BLOCK = 30;
 
-const COLORS = [
+const COLORS_DARK = [
   null,
   '#4dd0e1', // I - cyan
   '#ffd54f', // O - yellow
@@ -14,6 +14,18 @@ const COLORS = [
   '#90caf9', // J - pastel blue
   '#ffb74d', // L - orange
 ];
+
+const COLORS_LIGHT = [
+  null,
+  '#00acc1', // I
+  '#f9a825', // O
+  '#8e24aa', // T
+  '#43a047', // S
+  '#e53935', // Z
+  '#1e88e5', // J
+  '#fb8c00', // L
+];
+let COLORS = COLORS_DARK;
 
 const PIECES = [
   null,
@@ -169,7 +181,7 @@ function drawBlock(context, x, y, colorIndex, size, alpha) {
 }
 
 function drawGrid() {
-  ctx.strokeStyle = '#22222e';
+  ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--grid').trim() || '#22222e';
   ctx.lineWidth = 0.5;
   for (let c = 1; c < COLS; c++) {
     ctx.beginPath();
@@ -305,5 +317,25 @@ document.addEventListener('keydown', e => {
 });
 
 restartBtn.addEventListener('click', init);
+
+// ---- Tema oscuro / claro (siempre inicia en oscuro) ----
+const themeBtn = document.getElementById('theme-toggle');
+
+function setTheme(theme) {
+  document.documentElement.dataset.theme = theme;
+  COLORS = theme === 'light' ? COLORS_LIGHT : COLORS_DARK;
+  themeBtn.textContent = theme === 'light' ? '🌙' : '☀️';
+  try { localStorage.setItem('theme', theme); } catch (e) { /* modo privado */ }
+  if (board && current) { draw(); drawNext(); }
+}
+
+themeBtn.addEventListener('click', () => {
+  setTheme(document.documentElement.dataset.theme === 'light' ? 'dark' : 'light');
+  themeBtn.blur(); // evita que Space/flechas activen el botón
+});
+
+let savedTheme = 'dark';
+try { savedTheme = localStorage.getItem('theme') === 'light' ? 'light' : 'dark'; } catch (e) {}
+setTheme(savedTheme);
 
 init();
